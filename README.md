@@ -251,6 +251,7 @@ ___
 - [ ] The amounts on bars are sometimes buggy when choosing different years.
 - [ ] Add more filter functions, like choosing between multiple years, or on genre.
 - [ ] Clean the code (and rewrite to ES6)
+- [ ] If there are less than 8 results, a number might be shown more than once on the yAxis. For instance: 4, 4, 3, 3, 2, 1, 0, should be: 4, 3, 2, 1, 0. 
 ___
 
 ## Credits
