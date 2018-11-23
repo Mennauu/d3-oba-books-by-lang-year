@@ -1,0 +1,14 @@
+html {font-size: 16px}
+
+.text, .amount {font-size: 0.7em}
+
+.amount, .x-label, .y-label {font-weight: bold}
+
+.options {
+  position: fixed;
+  top: 1em;
+  right: 3em;
+  max-width: 38em;
+}
+
+option[hidden] {color: lightgray}

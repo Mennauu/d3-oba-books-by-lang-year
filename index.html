@@ -1,0 +1,335 @@
+<!--
+
+Title:         Interactive multiline bar chart in D3
+Description:   A visualization that shows the total amount of books
+               (from the OBA) per language, with the possibility to filter
+               the results per publication year
+Version:       0.1
+
+Author:        Menno de vries
+Github:        https://github.com/Mennauu/frontend-data
+
+Sources:       Look on Github, please.
+-->
+<!DOCTYPE html>
+<html lang=nl>
+  <head>
+    <meta charset="utf-8">
+    <title>D3 Datavisualization with interaction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="styles/bootstrap.min.css" rel="stylesheet">
+    <link href="styles/style.css" rel="stylesheet">
+  </head>
+  <body class="bg-light p-4">
+    <div class="container-fluid">
+      <h1 class="p-3 mb-4 d-inline-block">Amount of books in the OBA per language (per year)</h1>
+      <div id="chart" class="bg-white p-3 shadow-sm rounded"></div>
+      <div class="options shadow rounded bg-white p-3">
+        <div class="p-3 shadow-sm rounded bg-dark text-white">
+          <h2>Change the data</h2>
+        </div>
+        <div class="col-12 px-0 d-flex">
+          <div class="col-6 pl-0">
+            <div class="mt-3 p-3 shadow-sm rounded bg-primary text-white">
+              <span class="font-weight-bold">Select a publication year</span>
+              <select class="form-control mt-2" id="choose-year">
+                  <option value="" selected hidden>select year</option>
+              </select>
+              <p class="small pt-3"><b>Description</b><br>Amount of books in the OBA per language per publication year</p>
+            </div>
+          </div>
+          <div class="col-6 px-0">
+            <div class="mt-3 p-3 shadow-sm rounded bg-danger text-white">
+              <span class="font-weight-bold d-block">Reset to initial data</span>
+              <button class="btn btn-warning mt-2" id="reset">Reset chart</button>
+              <p class="small pt-3"><b>Description</b><br>Reset the chart to initial data: total amount of books in the OBA per language</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+
+      // ========================================================
+      //  Select with options as selected years
+      // ========================================================
+
+      // Partly written by rlemon
+      // source: https://stackoverflow.com/questions/12725265/is-it-possible-to-use-a-for-loop-in-select-in-html-and-how?answertab=votes#tab-top
+
+      (function() {
+        const elm = document.getElementById('choose-year'), // get the select
+              df = document.createDocumentFragment() // create a document fragment to hold the options while we create them
+              years = []
+
+        for (let i = 1800; i <= 2018; i++) {
+            years.push(i)
+        }
+
+        years.reverse()
+        years.forEach(function(d) {
+          const option = document.createElement('option') // create the option element
+          option.value = d // set the value property
+          option.appendChild(document.createTextNode(d)) // set the textContent in a safe way.
+          df.appendChild(option) // append the option to the document fragment
+        })
+
+        elm.appendChild(df) // append the document fragment to the DOM.
+      }())
+
+
+      // ========================================================
+      //  Define the chart
+      // ========================================================
+
+      const margin = {top: 50, right: 50, bottom: 65, left: 75},
+            width = 1600 - margin.left - margin.right,
+            height = 550 - margin.top - margin.bottom
+
+      // Retrieve color scheme defined by D3
+      const colour = d3.scaleOrdinal(d3.schemeCategory20)
+
+      // Set the ranges
+      const x = d3.scaleBand().range([0, width]).padding(0)
+      const y = d3.scaleLinear().range([height, 0])
+
+      // Create canvas
+      let svg = d3.select("#chart").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+      // ========================================================
+      //  Retrieve data from json file and filter it using nest
+      // ========================================================
+
+      // Good documentation on nesting:
+      // http://learnjsdata.com/group_data.html
+      // http://bl.ocks.org/phoebebright/raw/3176159/
+
+      d3.json("results.json", function(json) {
+        let data = d3.nest()
+        .key(function(d) { return d.pubYear }).sortKeys(d3.ascending)
+        .key(function(d) { return d.language })
+        .rollup(function (v) { return v.length })
+        .entries(json)
+        .map(function(d) { return {
+          year: d.key,
+          languages: d.values
+
+          .map(function(v) { return {
+            lang: v.key,
+            amount: v.value
+          }})
+        }})
+        draw(data)
+      })
+
+      // ========================================================
+      //  Draw the data
+      // ========================================================
+
+      function draw(data) {
+
+        // Trigger the update function
+        d3.select("#choose-year").on("change", function() {
+          const year = d3.select(this).property("value")
+          update(data, year)
+        })
+
+        // Since there are many "faulty" publication years we have
+        // to filter these out. I decide to only make it able to filter
+        // between 1800 and the current year (as of writing it's 2018)
+        const filteredYears = []
+        const loopedData = data.map(function(d) { return d })
+
+        loopedData.forEach(function(item) {
+          if(item.year > 1800 && item.year < new Date().getFullYear() + 1) {
+            delete item
+            filteredYears.push(item)
+          }
+        })
+
+        // Loop through languages
+        const allLanguagesAndAmount = data.map(function(d) { return d.languages })
+
+        // Get all languages and amounts per object
+        const formatLanguagesAndAmount = [...new Set([].concat(...allLanguagesAndAmount))]
+
+        const lang = {}
+        const amountPerLanguage = []
+
+        // format all objects into one object per language and summ up the amount
+        formatLanguagesAndAmount.forEach(function(d) {
+          if (!lang[d.lang]) {
+            return lang[d.lang] = d
+          }
+          return lang[d.lang].amount = lang[d.lang].amount + d.amount
+        })
+
+        // Push the keys in an array
+        d3.keys(lang).map(function(key) {
+          amountPerLanguage.push(lang[key])
+        })
+
+        // Sort results from high to low based on amount
+        amountPerLanguage.sort(function(a, b){
+          return b.amount-a.amount
+        })
+
+        console.log(object)
+
+
+        // scale the range of the data
+        x.domain(amountPerLanguage.map(function (d) { return d.lang }))
+        y.domain([0, d3.max(amountPerLanguage, function(d) { return d.amount })]).nice()
+
+        // add the X Axis
+        svg.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .attr("class", "text")
+          .attr("class", "xaxis")
+          .call(d3.axisBottom(x))
+            .selectAll("text")
+              .attr("x", "-2em")
+              .attr("y", "0")
+              .attr("transform", function(d) { return "rotate(-65)" })
+
+        // add the X Axis label
+        svg.append("text")
+          .attr("class", "x-label")
+          .attr("text-anchor", "end")
+          .attr("x", width / 2)
+          .attr("y", height + 60)
+          .text("Language")
+
+        // add the Y Axis
+        svg.append("g")
+          .attr("class", "text")
+          .attr("class", "yaxis")
+          .call(d3.axisLeft(y)
+            .tickFormat(d3.format("d")))
+
+        // add the Y Axis label
+          svg.append("text")
+            .attr("class", "y-label")
+            .attr("text-anchor", "end")
+            .attr("y", -60)
+            .attr("x", -140)
+            .attr("transform", "rotate(-90)")
+            .text("Amount of books")
+
+        // add bars container
+        const language = svg.append("g")
+          .data(amountPerLanguage)
+          .attr("class", "language")
+
+        // bars are drawn from a height to the y position, so if we want a transition, we have to give height and y values after the transition
+        // Transition source: https://stackoverflow.com/questions/36126004/height-transitions-go-from-top-down-rather-than-from-bottom-up-in-d3
+        language.selectAll("rect")
+          .data(amountPerLanguage)
+        .enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", function(d) { return x(d.lang) })
+          .attr("y", function(d) { return y(0) })
+          .attr("width", x.bandwidth())
+          .transition()
+          .duration(1000)
+          .attr("y", function(d) { return y(d.amount) })
+          .attr("height", function(d) { return height - y(d.amount) })
+          .attr("fill", function(d, i) { return colour(i) } )
+
+        // add text to bars. We do this seperately because a rect can't contain a text element
+        language.selectAll("text")
+          .data(amountPerLanguage)
+        .enter().append("text")
+          .attr("text-anchor", "middle")
+          .attr("class", "amount")
+          .attr("transform", function(d) { return "translate( "+ (x(d.lang) + 20) +" , "+ (y(d.amount) - 20) +"),"+ "rotate(-65)" })
+          .text(function(d) { return d.amount })
+
+      }
+
+      // ========================================================
+      //  Update the data
+      // ========================================================
+
+      function update(data, year) {
+
+        // Reload the page on button click (quick dirty fix)
+        d3.select("#reset").on("click", function() {
+          window.location.reload()
+        })
+
+        // Retrieve data where year is the same as selected year
+        const dataBasedOnChosenYear = data.filter(function(d) { return d.year === year })
+
+        // Then loop over it to get the data
+        const languagesAndAmount = dataBasedOnChosenYear.map(function(d) { return d.languages })
+
+        // Sort results from high to low based on amount
+        languagesAndAmount[0].sort(function(a, b){ return b.amount-a.amount })
+
+        // scale the range of the new data
+        x.domain(languagesAndAmount[0].map(function (d) { return d.lang }))
+        y.domain([0, d3.max(languagesAndAmount[0], function(d) { return d.amount })]).nice()
+
+        // add the X Axis
+        svg.select(".xaxis")
+            .transition()
+            .duration(500)
+            .call(d3.axisBottom(x))
+              .selectAll("text")
+                .attr("x", "-2em")
+                .attr("y", "0")
+                .attr("transform", function(d) { return "rotate(-65)" })
+
+        // add the Y Axis
+        svg.select(".yaxis")
+            .transition()
+            .duration(500)
+            .call(d3.axisLeft(y)
+              .tickFormat(d3.format("d")))
+
+        svg.selectAll("rect")
+          .data(languagesAndAmount[0])
+        .enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", function(d) { return x(d.lang) })
+          .attr("y", function(d) { return y(0) })
+          .attr("width", x.bandwidth())
+          .transition()
+          .duration(1000)
+          .attr("y", function(d) { return y(d.amount) })
+          .attr("height", function(d) { return height - y(d.amount) })
+          .attr("fill", function(d, i) { return colour(i) } )
+
+        svg.selectAll(".bar")
+          .data(languagesAndAmount[0])
+          .transition()
+          .duration(1000)
+          .attr("x", function(d) { return x(d.lang) })
+          .attr("y", function(d) { return y(d.amount) })
+          .attr("height", function(d) { return height - y(d.amount) })
+          .attr("width", x.bandwidth())
+
+        svg.selectAll(".bar")
+          .data(languagesAndAmount[0]).exit().remove()
+
+        svg.selectAll(".amount")
+          .data(languagesAndAmount[0])
+          .transition()
+          .duration(1000)
+          .attr("class", "amount")
+          .attr("transform", function(d) { return "translate( "+ (x(d.lang) + (x.bandwidth() / d.lang.length) + x.bandwidth() / d.lang.length / 2) +" , "+ (y(d.amount) - 25) +"),"+ "rotate(-65)" })
+          .text(function(d) { return d.amount })
+
+        svg.selectAll(".amount")
+          .data(languagesAndAmount[0]).exit().remove()
+      }
+    </script>
+  </body>
+</html>
