@@ -180,9 +180,6 @@ Sources:       Look on Github, please.
           return b.amount-a.amount
         })
 
-        console.log(object)
-
-
         // scale the range of the data
         x.domain(amountPerLanguage.map(function (d) { return d.lang }))
         y.domain([0, d3.max(amountPerLanguage, function(d) { return d.amount })]).nice()
