@@ -88,7 +88,7 @@ Underneath a snippet from the filtered data.
 { lang: "fri", amount: 1 }
 ```
 
-But, we aren't done yet. Because we also want the TOTAL amount of books per language. HOW ON EARTH are we going to do that. I was eager to figure this out myself. Which I did, but I think it could be done way easier.
+But, we aren't done yet. Because we also want the TOTAL amount of books per language. HOW ON EARTH are we going to do that. I was so eager to figure this. Which I did, but I think it could be done way easier.
 
 ```javascript
 // Loop through languages
@@ -212,7 +212,7 @@ d3.keys(lang).map(function(key) {
 })
 ```
 
-*I also used the select form written by rlemon, which you can find here: [Is it possible to use a for loop in select in HTML and how?](https://stackoverflow.com/questions/12725265/is-it-possible-to-use-a-for-loop-in-select-in-html-and-how?answertab=votes#tab-top). I don't want to go into much detail about this. I didn't write it myself because I knew about the code that he had written because I used it before in a different project, and wanted to spend my scarce time on D3 related features. I'm not reinventing the wheel. The only adjustment I made is getting the results in reversed order.*
+*I also used the select form written by rlemon, which you can find here: [Is it possible to use a for loop in select in HTML and how?](https://stackoverflow.com/questions/12725265/is-it-possible-to-use-a-for-loop-in-select-in-html-and-how?answertab=votes#tab-top). I don't want to go into much detail about this. I didn't write it myself because I knew about the code that he had written because I used it before in a different project, and wanted to spent my scarce time on D3 related features. I'm not reinventing the wheel. The only adjustment I made is getting the results in reversed order.*
 
 ## D3 Features
 These are all the D3 features I used in this project. You can read about them on D3's Github: https://github.com/d3
@@ -239,7 +239,7 @@ This is what I had already made before the feedback, which is fine because I can
 
 ![map](/images/map.png)
 
-After that I made a dynamic grouped bar chart which was based on the xAsis having years. It took me quite some time to figure out how to make it dynamic. In the end I could just add a country and amounts per year in the data file and it would add a new bar to the group for each year. Well, that was a big waste of time, lol. I didn't need that at all in the chart that I was going to make based off the idea I had. I still thought it was cool though, because I did manage to pull it off.
+After that I made a dynamic grouped bar chart which was based on the xAsis having years. It took me quite some time to figure out how to make it dynamic. In the end I could just add a country and amounts per year in the data file and it would add a new bar to the group for each year. Well, that was a big waste of time. I didn't need that at all in the chart that I was going to make based off the idea I had. I still thought it was cool though, because I did manage to pull it off. Guess it wasn't a waste of time after all.
 
 ![grouped bars](/images/grouped-bars.png)
 
