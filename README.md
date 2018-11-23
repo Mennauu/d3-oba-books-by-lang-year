@@ -274,3 +274,5 @@ These are some of the sources that gave me insights on some things, like nesting
 * http://bl.ocks.org/phoebebright/raw/3176159/
 
 ## License
+
+See the LICENSE file for license rights and limitations (MIT).
